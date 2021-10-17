@@ -5,13 +5,13 @@ def conv_1D_equal_length(a, b):
 		raise Exception('The lists in 1D convolution must have equal lengths')
 
 	result = 0
-	for a_index, a_each in enumerate(a):
-		result += a_each * b[- a_index - 1]
+	for n in range(len(a)):
+		result += a[n] * b[-n-1]
 	return result
 
 def conv_1D(a, b):
 	if (len(a) == len(b)):
-		return conv_1D_equal_length(a, b)
+		return [conv_1D_equal_length(a, b)]
 	
 	length_a, length_b = len(a), len(b)
 	if length_a < length_b:
@@ -25,21 +25,25 @@ def conv_1D(a, b):
 		length_short = length_b
 		length_long = length_a
 
-	result = []
-	for start_index_long in range(0, length_long - length_short + 1):
-		result.append(conv_1D_equal_length(list_short, list_long[start_index_long:start_index_long + length_short]))
+	result_length = length_long - length_short + 1
+	result = np.empty((result_length,))
+	for start_index_long in range(result_length):
+		end_index_long = start_index_long + length_short
+		result[start_index_long] = conv_1D_equal_length(list_short, list_long[start_index_long:end_index_long])
 
 	return result
 
 def conv_1D2D(list_1d, list_2d, direction=0):
 	if direction == 0: # x direction
 		result_shape = (
-			list_2d.shape[0]-len(list_1d)+1, 
+			list_2d.shape[0],
 			list_2d.shape[1]-len(list_1d)+1
 		)
 		result = np.empty(result_shape)
-		for index in range(result_shape[0]):
-			result[index] = conv_1D(list_1d, list_2d[index])
+		for j in range(result_shape[0]):
+			list_2d_row = list_2d[j]
+			row = conv_1D(list_1d, list_2d_row)
+			result[j] = row
 		return result
 	else: # y direction
 		return conv_1D2D(list_1d, list_2d.T, 0).T
@@ -54,7 +58,7 @@ def conv_2D_gaussian(list_2d, sigma, kernel_size):
 def gaussian_kernel_1d(sigma, size):
 	if (size % 2 == 0):
 		raise Exception('The kernel size should be odd')
-	kernel_center_index = (size + 1) / 2
+	kernel_center_index = (size - 1) / 2
 	kernel = np.zeros(size)
 	for index in range(size):
 		x = index - kernel_center_index
@@ -62,25 +66,6 @@ def gaussian_kernel_1d(sigma, size):
 	return kernel
 
 def gaussian_1d(x, sigma):
-	return 1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(- x**2 / 2 * sigma**2)
-
-# def generate_gaussian_kernel(size, sigma):
-# 	if size % 2 == 0:
-# 		raise Exception('The kernel size should be odd')
-
-# 	center = (size + 1) / 2
-# 	rows = np.zeros((size, size))
-# 	for i in range(size):
-# 		x = i - center
-# 		for j in range(size):
-# 			y = j - center
-# 			rows[j][i] = gaussian_2d(x, y, sigma) 
-
-# 	return rows
-
-# def gaussian_2d(x, y, sigma):
-# 	return (1 / (2 * np.pi * sigma**2)) * np.exp( - (x**2 + y**2) / (2 * sigma**2))
-
-
+	return 1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(- x**2 / (2 * sigma**2))
 
 
